@@ -45,80 +45,59 @@ pipeline {
                 '''
             }
         }
+
         stage('Test SSH') {
-    steps {
-        sshagent(credentials: ['app-server-ssh']) {
-            sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 hostname
-            '''
+            steps {
+                sshagent(credentials: ['app-server-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 hostname
+                    '''
+                }
+            }
         }
-    }
-    
-}
-stage('Deploy to App Server') {
-    steps {
-        sshagent(credentials: ['app-server-ssh']) {
-            sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 "
-                    docker pull praveensusen/portfolio-app:latest &&
-                    docker stop portfolio-container || true &&
-                    docker rm portfolio-container || true &&
-                    docker run -d --name portfolio-container -p 80:80 praveensusen/portfolio-app:latest
-                "
-            '''
-        }
-    }
-}
-stage('Health Check') {
-    steps {
-        sshagent(credentials: ['app-server-ssh']) {
-            sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 "
-                    STATUS=\$(curl -o /dev/null -s -w '%{http_code}' http://localhost)
 
-                    if [ \$STATUS -eq 200 ]; then
-                        echo 'Application is running successfully.'
-                    else
-                        echo 'Application failed with status: '\$STATUS
-                        exit 1
-                    fi
-                "
-            '''
+        stage('Deploy to App Server') {
+            steps {
+                sshagent(credentials: ['app-server-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 "
+                            docker pull praveensusen/portfolio-app:latest &&
+                            docker stop portfolio-container || true &&
+                            docker rm portfolio-container || true &&
+                            docker run -d --name portfolio-container -p 80:80 praveensusen/portfolio-app:latest
+                        "
+                    '''
+                }
+            }
         }
-    }
-}
-    steps {
-        sshagent(credentials: ['app-server-ssh']) {
-            sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 "
-                    STATUS=\$(curl -o /dev/null -s -w '%{http_code}' http://localhost)
 
-                    if [ \$STATUS -eq 200 ]; then
-                        echo 'Application is running successfully.'
-                    else
-                        echo 'Application failed with status: '\$STATUS
-                        exit 1
-                    fi
-                "
-            '''
+        stage('Health Check') {
+            steps {
+                sshagent(credentials: ['app-server-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 "
+                            curl -f http://localhost
+                        "
+                    '''
+                }
+            }
         }
-    }
-}
 
-    }   // <-- stages block ends here
+    }
 
     post {
+
         always {
             sh 'docker logout'
         }
 
         success {
-            echo 'Docker image pushed successfully!'
+            echo '✅ Pipeline completed successfully!'
         }
 
         failure {
-            echo 'Pipeline failed!'
+            echo '❌ Pipeline failed!'
         }
-    }
 
+    }
 }
