@@ -3,7 +3,7 @@ pipeline
     agent any
     
     environment {
-        I IMAGE_NAME = "praveensusen/portfolio-app"
+        IMAGE_NAME = "praveensusen/portfolio-app"
         IMAGE_TAG = "latest"
     }
     stages {
