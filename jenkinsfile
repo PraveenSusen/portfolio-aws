@@ -53,6 +53,28 @@ pipeline {
             '''
         }
     }
+    stage('Deploy to App Server') {
+    steps {
+        sshagent(credentials: ['app-server-ssh']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 << EOF
+
+                docker pull praveensusen/portfolio-app:latest
+
+                docker stop portfolio-container || true
+
+                docker rm portfolio-container || true
+
+                docker run -d \
+                    --name portfolio-container \
+                    -p 80:80 \
+                    praveensusen/portfolio-app:latest
+
+                EOF
+            '''
+        }
+    }
+}
 }
 
     }   // <-- stages block ends here
