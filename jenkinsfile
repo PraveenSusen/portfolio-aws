@@ -87,6 +87,23 @@ stage('Health Check') {
         }
     }
 }
+    steps {
+        sshagent(credentials: ['app-server-ssh']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 "
+                    STATUS=\$(curl -o /dev/null -s -w '%{http_code}' http://localhost)
+
+                    if [ \$STATUS -eq 200 ]; then
+                        echo 'Application is running successfully.'
+                    else
+                        echo 'Application failed with status: '\$STATUS
+                        exit 1
+                    fi
+                "
+            '''
+        }
+    }
+}
 
     }   // <-- stages block ends here
 
