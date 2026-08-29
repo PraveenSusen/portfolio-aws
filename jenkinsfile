@@ -45,6 +45,15 @@ pipeline {
                 '''
             }
         }
+        stage('Test SSH') {
+    steps {
+        sshagent(credentials: ['app-server-ssh']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no ubuntu@10.0.0.101 hostname
+            '''
+        }
+    }
+}
 
     }   // <-- stages block ends here
 
